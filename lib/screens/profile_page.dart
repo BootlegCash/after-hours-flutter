@@ -204,19 +204,6 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
           children: [
             _buildProfileCard(username, rank, xp, xpNext, progress),
             const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: [
-                _buildAction(Icons.emoji_events_outlined, 'Achievements', () {
-                  Navigator.pushNamed(context, '/achievements')
-                      .then((_) => _loadProfile());
-                }),
-                _buildAction(Icons.calendar_today_outlined, 'Calendar', () {
-                  Navigator.pushNamed(context, '/calendar')
-                      .then((_) => _loadProfile());
-                }),
-              ],
-            ),
             const SizedBox(height: 24),
             GridView.count(
               shrinkWrap: true,

@@ -70,7 +70,7 @@ class MyApp extends StatelessWidget {
         '/ranks': (_) => LeaderboardPage(apiService: apiService),
 
         // Info/utility
-        '/view-information': (_) => ViewInformationPage(apiService: apiService),
+        //'/view-information': (_) => ViewInformationPage(apiService: apiService),
         '/reset-password': (_) => ResetPasswordPage(apiService: apiService),
         '/drinking-safely': (_) => DrinkingSafelyPage(apiService: apiService),
         '/policies': (_) => PoliciesPage(apiService: apiService),
