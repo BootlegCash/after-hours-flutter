@@ -2,7 +2,7 @@ name: iOS TestFlight
 
 on:
   push:
-    branches: [ "main" ]
+    branches: ["main"]
   workflow_dispatch:
 
 jobs:
@@ -10,25 +10,30 @@ jobs:
     runs-on: macos-14
 
     env:
-      # Match / signing
+      # --- Match / Signing ---
       MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
       MATCH_GIT_URL: git@github.com:BootlegCash/after-hours-ios-signing.git
 
-      # App Store Connect API key (preferred over Apple ID password)
+      # --- App Store Connect API Key ---
       ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
       ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
 
-      # Your iOS bundle identifier + team id
+      # --- App Info ---
       APP_IDENTIFIER: ${{ secrets.APP_IDENTIFIER }}
       APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
     steps:
+      # -------------------------
+      # Checkout Repo
+      # -------------------------
       - name: Checkout
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      # ✅ FIX: use channel, not flutter-version: stable
+      # -------------------------
+      # Flutter Setup
+      # -------------------------
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
@@ -38,6 +43,9 @@ jobs:
       - name: Flutter pub get
         run: flutter pub get
 
+      # -------------------------
+      # Ruby + Bundler
+      # -------------------------
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
@@ -45,13 +53,17 @@ jobs:
           bundler-cache: true
           working-directory: ios
 
-      # (Optional but usually needed for Flutter iOS builds)
-      - name: Install CocoaPods
-        run: |
-          sudo gem install cocoapods
-          pod --version
+      - name: Bundle install (iOS)
+        working-directory: ios
+        run: bundle install
 
-      # --- SSH for match repo (certs/profiles repo) ---
+      - name: Verify pod in bundle
+        working-directory: ios
+        run: bundle exec pod --version
+
+      # -------------------------
+      # SSH for Match Repo
+      # -------------------------
       - name: Set up SSH for match repo
         run: |
           mkdir -p ~/.ssh
@@ -69,23 +81,28 @@ jobs:
 
           ssh -T git@github.com || true
 
-      # --- App Store Connect API key (.p8) ---
-      # Store your .p8 content as BASE64 in ASC_KEY_P8_BASE64
-      - name: Create App Store Connect API key file
+      # -------------------------
+      # Create App Store Connect API key file
+      # -------------------------
+      - name: Create App Store Connect API key
         working-directory: ios
         run: |
           mkdir -p fastlane
-          echo "${{ secrets.ASC_KEY_P8_BASE64 }}" | base64 --decode > fastlane/AuthKey_${{ env.ASC_KEY_ID }}.p8
+          echo "${{ secrets.ASC_KEY_P8_BASE64 }}" | base64 --decode > fastlane/AuthKey_${ASC_KEY_ID}.p8
           ls -la fastlane
 
-      # --- Install iOS dependencies (pods) ---
+      # -------------------------
+      # Install CocoaPods (via Bundler)
+      # -------------------------
       - name: Pod install
         working-directory: ios
         run: |
           bundle exec pod repo update
           bundle exec pod install --repo-update
 
-      # --- Fastlane: install signing (match) ---
+      # -------------------------
+      # Match (App Store signing)
+      # -------------------------
       - name: Match (App Store)
         working-directory: ios
         run: |
@@ -95,12 +112,16 @@ jobs:
             --app_identifier "${APP_IDENTIFIER}" \
             --team_id "${APPLE_TEAM_ID}"
 
-      # --- Build IPA with Flutter (uses Xcode under the hood) ---
+      # -------------------------
+      # Build IPA
+      # -------------------------
       - name: Build IPA
         run: |
           flutter build ipa --release
 
-      # --- Upload to TestFlight using Fastlane pilot with API key ---
+      # -------------------------
+      # Upload to TestFlight
+      # -------------------------
       - name: Upload to TestFlight
         working-directory: ios
         run: |
