@@ -1,0 +1,74 @@
+name: iOS TestFlight
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
+jobs:
+  build_and_upload:
+    runs-on: macos-14
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: "stable"
+          cache: true
+
+      - name: Flutter pub get
+        run: flutter pub get
+
+      - name: Install Ruby gems (fastlane)
+        working-directory: ios
+        run: |
+          gem install bundler -v 2.4.10
+          bundle _2.4.10_ install
+
+      - name: Set up SSH for match repo
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.MATCH_GIT_PRIVATE_KEY }}" > ~/.ssh/match_ci
+          chmod 600 ~/.ssh/match_ci
+          ssh-keyscan github.com >> ~/.ssh/known_hosts
+          cat >> ~/.ssh/config <<EOF
+          Host github.com
+            HostName github.com
+            User git
+            IdentityFile ~/.ssh/match_ci
+            IdentitiesOnly yes
+          EOF
+
+      - name: Create App Store Connect API key file
+        working-directory: ios
+        run: |
+          mkdir -p fastlane
+          cat > fastlane/api_key.json <<EOF
+          {
+            "key_id": "${{ secrets.APP_STORE_CONNECT_API_KEY_ID }}",
+            "issuer_id": "${{ secrets.APP_STORE_CONNECT_API_ISSUER_ID }}",
+            "key": "$(echo "${{ secrets.APP_STORE_CONNECT_API_KEY_P8 }}" | sed 's/$/\\n/' | tr -d '\r')",
+            "in_house": false
+          }
+          EOF
+
+      - name: Install signing certs/profiles (match)
+        working-directory: ios
+        env:
+          MATCH_PASSWORD: ${{ secrets.MATCH_PASSWORD }}
+        run: |
+          bundle exec fastlane match appstore --readonly
+
+      - name: Build iOS (IPA)
+        run: |
+          flutter build ipa --release
+
+      - name: Upload to TestFlight
+        working-directory: ios
+        run: |
+          bundle exec fastlane pilot upload \
+            --ipa ../build/ios/ipa/*.ipa \
+            --api_key_path fastlane/api_key.json
