@@ -1,10 +1,13 @@
 git_url("git@github.com:BootlegCash/after-hours-ios-signing.git")
 storage_mode("git")
 
-# IMPORTANT: this must match what you're running in CI (match appstore)
 type("appstore")
 
 app_identifier([
   "com.afterhoursmedia.rankedabout"
 ])
 
+team_id("7DDA47W5L9")
+
+# Lock the profile name so match stops creating new ones with suffixes
+profile_name("match AppStore com.afterhoursmedia.rankedabout")
