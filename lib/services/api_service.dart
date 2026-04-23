@@ -5,25 +5,38 @@ import 'package:http/http.dart' as http;
 
 class ApiService {
   static const baseUrl = 'https://ranked-0xtx.onrender.com';
-  String? token;
 
+  // ✅ Web-gate key (Render ENV: APP_GATE_KEY)
+  static const String _appGateKey = 'ah_9f8d2c1b6a3e4f7a8c0d_very_secret';
+
+  String? token;
   String? currentUsername;
   VoidCallback? onAuthStateChanged;
 
   bool get isAuthenticated => token != null && token!.isNotEmpty;
 
+  String get _accountsApiBase => '$baseUrl/accounts/api';
+
   // ================================================================
-  // INTERNAL HELPERS
+  // INTERNAL HELPERS (ALWAYS INCLUDE X-APP-KEY)
   // ================================================================
+
+  Map<String, String> _baseHeaders() {
+    return {
+      'X-APP-KEY': _appGateKey,
+    };
+  }
 
   Map<String, String> _authHeaders() {
     return {
+      ..._baseHeaders(),
       'Authorization': 'Bearer $token',
     };
   }
 
   Map<String, String> _authJsonHeaders() {
     return {
+      ..._baseHeaders(),
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
     };
@@ -31,12 +44,25 @@ class ApiService {
 
   Map<String, String> _authFormHeaders() {
     return {
+      ..._baseHeaders(),
       'Content-Type': 'application/x-www-form-urlencoded',
       'Authorization': 'Bearer $token',
     };
   }
 
-  String get _accountsApiBase => '$baseUrl/accounts/api';
+  Map<String, String> _jsonHeaders() {
+    return {
+      ..._baseHeaders(),
+      'Content-Type': 'application/json',
+    };
+  }
+
+  Map<String, String> _formHeaders() {
+    return {
+      ..._baseHeaders(),
+      'Content-Type': 'application/x-www-form-urlencoded',
+    };
+  }
 
   // ================================================================
   // AUTH: LOGIN
@@ -49,6 +75,7 @@ class ApiService {
     try {
       final response = await http.post(
         url,
+        headers: _formHeaders(), // ✅ includes X-APP-KEY
         body: {
           'username': username,
           'password': password,
@@ -91,7 +118,7 @@ class ApiService {
     try {
       final response = await http.post(
         url,
-        headers: {'Content-Type': 'application/json'},
+        headers: _jsonHeaders(), // ✅ includes X-APP-KEY
         body: jsonEncode({
           'username': username,
           'email': email,
@@ -228,7 +255,6 @@ class ApiService {
   // FRIENDS SYSTEM
   // ================================================================
 
-  // GET /friends/
   Future<List<dynamic>> fetchFriends() async {
     final url = Uri.parse('$_accountsApiBase/friends/');
     final resp = await http.get(url, headers: _authJsonHeaders());
@@ -245,7 +271,6 @@ class ApiService {
     throw Exception('Failed to load friends: ${resp.statusCode}');
   }
 
-  // GET /friends/requests/
   Future<Map<String, dynamic>> fetchFriendRequests() async {
     final url = Uri.parse('$_accountsApiBase/friends/requests/');
     final resp = await http.get(url, headers: _authJsonHeaders());
@@ -261,7 +286,6 @@ class ApiService {
     throw Exception('Failed to load requests: ${resp.statusCode}');
   }
 
-  // GET /friends/search/?q=...
   Future<List<dynamic>> searchUsers(String query) async {
     final url = Uri.parse('$_accountsApiBase/friends/search/?q=$query');
     final resp = await http.get(url, headers: _authJsonHeaders());
@@ -278,7 +302,6 @@ class ApiService {
     throw Exception('Search failed: ${resp.statusCode}');
   }
 
-  // POST /friends/request/send/
   Future<bool> sendFriendRequest(String username) async {
     if (token == null) return false;
 
@@ -305,7 +328,6 @@ class ApiService {
     }
   }
 
-  // POST /friends/request/<id>/accept/
   Future<void> acceptFriendRequest(int requestId) async {
     final url =
         Uri.parse('$_accountsApiBase/friends/request/$requestId/accept/');
@@ -320,7 +342,6 @@ class ApiService {
     }
   }
 
-  // POST /friends/request/<id>/reject/
   Future<void> rejectFriendRequest(int requestId) async {
     final url =
         Uri.parse('$_accountsApiBase/friends/request/$requestId/reject/');
@@ -335,7 +356,6 @@ class ApiService {
     }
   }
 
-  // POST /friends/remove/
   Future<bool> removeFriend(String username) async {
     if (token == null) return false;
 
@@ -404,7 +424,6 @@ class ApiService {
   // FEED
   // ================================================================
 
-  // Get feed: me + friends
   Future<List<Map<String, dynamic>>?> fetchFeed() async {
     if (token == null) return null;
 
@@ -435,7 +454,6 @@ class ApiService {
     return null;
   }
 
-  // Create a new post
   Future<Map<String, dynamic>?> createPost(String content) async {
     if (token == null) return null;
 
@@ -465,7 +483,6 @@ class ApiService {
     return null;
   }
 
-  // Toggle like/unlike
   Future<Map<String, dynamic>?> toggleLikePost(int postId) async {
     if (token == null) return null;
 

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:after_hours/services/api_service.dart';
 import 'package:after_hours/main.dart';
 import 'register_page.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class LoginPage extends StatefulWidget {
   final ApiService apiService;
@@ -14,8 +15,50 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final usernameController = TextEditingController();
   final passwordController = TextEditingController();
+
   bool isLoading = false;
   String? errorMessage;
+
+  // ============================================================
+  // ✅ PUT YOUR NEW ROTATED KEY HERE (replace the string below)
+  // ============================================================
+  static const String _gateKey = "ah_9f8d2c1b6a3e4f7a8c0d_very_secret";
+
+  // This builds: https://www.afterhoursranked.com/accounts/password_reset
+  Uri get _resetUri => Uri.https(
+        "www.afterhoursranked.com",
+        "/accounts/password_reset/",
+        {"k": _gateKey},
+      );
+
+  Future<void> _openResetPassword() async {
+    setState(() => errorMessage = null);
+
+    final uri = _resetUri;
+
+    try {
+      final canOpen = await canLaunchUrl(uri);
+      if (!canOpen) {
+        if (!mounted) return;
+        setState(() => errorMessage = "Can't open reset page on this device.");
+        return;
+      }
+
+      // iOS: in-app Safari sheet is usually the most reliable
+      final ok = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
+
+      // Fallback: external Safari
+      if (!ok) {
+        final ok2 = await launchUrl(uri, mode: LaunchMode.externalApplication);
+        if (!ok2 && mounted) {
+          setState(() => errorMessage = "Couldn't open reset page. Try again.");
+        }
+      }
+    } catch (_) {
+      if (!mounted) return;
+      setState(() => errorMessage = "Reset link failed to open. Try again.");
+    }
+  }
 
   Future<void> _login() async {
     setState(() {
@@ -29,6 +72,7 @@ class _LoginPageState extends State<LoginPage> {
     );
 
     if (!mounted) return;
+
     if (success) {
       Navigator.pushAndRemoveUntil(
         context,
@@ -49,13 +93,18 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   @override
+  void dispose() {
+    usernameController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Container(
         width: double.infinity,
         height: double.infinity,
-
-        /// 🔥 Neon Gradient Background
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [
@@ -67,7 +116,6 @@ class _LoginPageState extends State<LoginPage> {
             end: Alignment.bottomCenter,
           ),
         ),
-
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
@@ -75,9 +123,8 @@ class _LoginPageState extends State<LoginPage> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  /// 🔥 NEON TITLE
                   Text(
-                    "After Hours",
+                    "After Hours: Ranked",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 42,
@@ -92,22 +139,16 @@ class _LoginPageState extends State<LoginPage> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 8),
-
-                  Text(
+                  const Text(
                     "Log in to track, flex, and compete.",
                     textAlign: TextAlign.center,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 14,
                       color: Colors.white60,
-                      fontWeight: FontWeight.w400,
                     ),
                   ),
-
                   const SizedBox(height: 32),
-
-                  /// 🔥 FROSTED GLASS CARD
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(22),
@@ -120,7 +161,6 @@ class _LoginPageState extends State<LoginPage> {
                     ),
                     child: Column(
                       children: [
-                        /// Neon Username Field
                         TextField(
                           controller: usernameController,
                           style: const TextStyle(color: Colors.white),
@@ -134,20 +174,13 @@ class _LoginPageState extends State<LoginPage> {
                                 const TextStyle(color: Colors.cyanAccent),
                             filled: true,
                             fillColor: Colors.white.withOpacity(0.07),
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 12,
-                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide.none,
                             ),
                           ),
                         ),
-
                         const SizedBox(height: 18),
-
-                        /// Neon Password Field
                         TextField(
                           controller: passwordController,
                           obscureText: true,
@@ -162,37 +195,26 @@ class _LoginPageState extends State<LoginPage> {
                                 const TextStyle(color: Colors.cyanAccent),
                             filled: true,
                             fillColor: Colors.white.withOpacity(0.07),
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 14,
-                              horizontal: 12,
-                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(14),
                               borderSide: BorderSide.none,
                             ),
                           ),
                         ),
-
-                        const SizedBox(height: 16),
-
+                        const SizedBox(height: 12),
                         if (errorMessage != null)
-                          Align(
-                            alignment: Alignment.centerLeft,
-                            child: Text(
-                              errorMessage!,
-                              style: const TextStyle(
-                                color: Colors.redAccent,
-                                fontSize: 13,
-                              ),
+                          Text(
+                            errorMessage!,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              color: Colors.redAccent,
+                              fontSize: 13,
                             ),
                           ),
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 30),
-
-                  /// 🔥 Glowing Login Button
                   GestureDetector(
                     onTap: isLoading ? null : _login,
                     child: Container(
@@ -224,7 +246,6 @@ class _LoginPageState extends State<LoginPage> {
                             )
                           : const Text(
                               "LOG IN",
-                              textAlign: TextAlign.center,
                               style: TextStyle(
                                 color: Colors.white,
                                 fontSize: 18,
@@ -234,10 +255,7 @@ class _LoginPageState extends State<LoginPage> {
                             ),
                     ),
                   ),
-
                   const SizedBox(height: 24),
-
-                  /// Register Link
                   TextButton(
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(
@@ -251,8 +269,21 @@ class _LoginPageState extends State<LoginPage> {
                     },
                     child: const Text(
                       "Don't have an account? Register",
+                      textAlign: TextAlign.center,
                       style: TextStyle(
                         color: Colors.white70,
+                        fontSize: 14,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+                  TextButton(
+                    onPressed: _openResetPassword,
+                    child: const Text(
+                      "Forgot password?",
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: Colors.cyanAccent,
                         fontSize: 14,
                         decoration: TextDecoration.underline,
                       ),

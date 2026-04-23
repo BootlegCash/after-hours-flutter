@@ -7,6 +7,7 @@ import 'package:after_hours/services/api_service.dart';
 // Core screens (tabs)
 import 'package:after_hours/screens/login_page.dart';
 import 'package:after_hours/screens/register_page.dart';
+import 'package:after_hours/screens/reset_password_page.dart';
 import 'package:after_hours/screens/profile_page.dart';
 import 'package:after_hours/screens/feed_page.dart';
 import 'package:after_hours/screens/friends_page.dart';
@@ -70,13 +71,14 @@ class MyApp extends StatelessWidget {
         '/ranks': (_) => LeaderboardPage(apiService: apiService),
 
         // Info/utility
-        //'/view-information': (_) => ViewInformationPage(apiService: apiService),
+        '/view-information': (_) => ViewInformationPage(apiService: apiService),
+
         '/reset-password': (_) => ResetPasswordPage(apiService: apiService),
         '/drinking-safely': (_) => DrinkingSafelyPage(apiService: apiService),
         '/policies': (_) => PoliciesPage(apiService: apiService),
         '/about-app': (_) => AboutAppPage(apiService: apiService),
-        '/feedback': (_) => FeedbackPage(apiService: apiService),
-        '/contact': (_) => ContactPage(apiService: apiService),
+        '/feedback': (_) => const SendFeedbackPage(),
+        '/contact': (_) => const ContactUsPage(),
 
         // Friends extras (lists)
         '/friends/requests': (_) => FriendRequestsPage(apiService: apiService),

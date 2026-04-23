@@ -81,12 +81,12 @@ class SettingsPage extends StatelessWidget {
           const SizedBox(height: 10),
           const Divider(color: Colors.white24, indent: 16, endIndent: 16),
           const SizedBox(height: 10),
-          _buildSettingsTile(
-            context,
-            'Send Feedback',
-            Icons.feedback_outlined,
-            '/feedback',
-          ),
+          // _buildSettingsTile(
+          //   context,
+          //   'Send Feedback',
+          //   Icons.feedback_outlined,
+          //   '/feedback',
+          // ),
           _buildSettingsTile(
             context,
             'Contact Us',
