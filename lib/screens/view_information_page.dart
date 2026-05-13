@@ -12,7 +12,6 @@ class ViewInformationPage extends StatefulWidget {
 class _ViewInformationPageState extends State<ViewInformationPage> {
   Map<String, dynamic>? profile;
   bool _loading = true;
-  bool _saving = false;
 
   @override
   void initState() {
@@ -33,8 +32,7 @@ class _ViewInformationPageState extends State<ViewInformationPage> {
     setState(() => _loading = true);
 
     try {
-      final data =
-          await widget.apiService.fetchUserProfile(); // ✅ same as ProfilePage
+      final data = await widget.apiService.fetchUserProfile();
       if (!mounted) return;
       setState(() {
         profile = data;
@@ -49,139 +47,20 @@ class _ViewInformationPageState extends State<ViewInformationPage> {
     }
   }
 
-  String _displayNameFromProfile(Map<String, dynamic> p) {
-    // support multiple possible keys
-    return (p['display_name'] ?? p['displayName'] ?? '').toString();
-  }
-
-  Future<void> _editDisplayName() async {
-    if (profile == null) return;
-
-    final current = _displayNameFromProfile(profile!);
-    final controller = TextEditingController(text: current);
-
-    final newName = await showDialog<String>(
-      context: context,
-      builder: (_) => AlertDialog(
-        title: const Text('Change Display Name'),
-        content: TextField(
-          controller: controller,
-          maxLength: 20,
-          decoration: const InputDecoration(
-            hintText: 'Enter new display name',
-            border: OutlineInputBorder(),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.pop(context, controller.text.trim()),
-            child: const Text('Save'),
-          ),
-        ],
-      ),
-    );
-
-    if (newName == null) return;
-    final trimmed = newName.trim();
-
-    if (trimmed.isEmpty) {
-      _toast('Display name can’t be empty.');
-      return;
-    }
-    if (trimmed.length < 2) {
-      _toast('Display name is too short.');
-      return;
-    }
-
-    // ✅ Update UI immediately (local)
-    setState(() {
-      profile = {...profile!, 'display_name': trimmed};
-    });
-
-    // OPTIONAL: If/when you add a backend endpoint + ApiService method,
-    // call it here. For now you said you don't need hookup.
-    //
-    // setState(() => _saving = true);
-    // try {
-    //   await widget.apiService.updateDisplayName(trimmed);
-    //   await _loadProfile(); // refresh from server
-    //   _toast('Display name updated!');
-    // } catch (_) {
-    //   _toast('Could not save to server (local only).');
-    // } finally {
-    //   if (mounted) setState(() => _saving = false);
-    // }
-
-    _toast('Display name updated (local only).');
-  }
-
-  void _toast(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg)));
-  }
-
   @override
   Widget build(BuildContext context) {
-    if (_loading) {
-      return Scaffold(
-        backgroundColor: const Color(0xFF0f0c29),
-        appBar: AppBar(
-          title: const Text('Your Information',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          backgroundColor: const Color(0xFF1c1842),
-          elevation: 0,
-        ),
-        body: const Center(
-          child: CircularProgressIndicator(color: Colors.pinkAccent),
-        ),
-      );
-    }
-
-    if (profile == null) {
-      return Scaffold(
-        backgroundColor: const Color(0xFF0f0c29),
-        appBar: AppBar(
-          title: const Text('Your Information',
-              style:
-                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-          backgroundColor: const Color(0xFF1c1842),
-          elevation: 0,
-        ),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Text('Could not load your profile.',
-                  style: TextStyle(color: Colors.white70)),
-              const SizedBox(height: 12),
-              ElevatedButton(
-                onPressed: _loadProfile,
-                style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.pinkAccent),
-                child: const Text('Retry'),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
-
-    final String username = (profile!['username'] ?? 'User').toString();
-    final String displayName = _displayNameFromProfile(profile!);
-
     return Scaffold(
       backgroundColor: const Color(0xFF0f0c29),
       appBar: AppBar(
         title: const Text('Your Information',
             style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         backgroundColor: const Color(0xFF1c1842),
+        iconTheme: const IconThemeData(color: Colors.white),
         elevation: 0,
       ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)],
@@ -189,101 +68,209 @@ class _ViewInformationPageState extends State<ViewInformationPage> {
             end: Alignment.bottomCenter,
           ),
         ),
-        child: ListView(
-          padding: const EdgeInsets.all(16),
-          children: [
-            Container(
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Colors.white.withOpacity(0.05),
-                    Colors.white.withOpacity(0.15)
-                  ],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(20),
-                border: Border.all(color: Colors.white.withOpacity(0.1)),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    'Account',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 16,
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-
-                  // Username (read-only)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.alternate_email,
-                        color: Colors.cyanAccent),
-                    title: const Text('Username',
-                        style: TextStyle(color: Colors.white)),
-                    subtitle: Text('@$username',
-                        style: const TextStyle(color: Colors.white70)),
-                  ),
-
-                  Divider(color: Colors.white.withOpacity(0.12)),
-
-                  // Display name (editable)
-                  ListTile(
-                    contentPadding: EdgeInsets.zero,
-                    leading: const Icon(Icons.badge_outlined,
-                        color: Colors.pinkAccent),
-                    title: const Text('Display Name',
-                        style: TextStyle(color: Colors.white)),
-                    subtitle: Text(
-                      displayName.isNotEmpty ? displayName : 'Not set',
-                      style: const TextStyle(color: Colors.white70),
-                    ),
-                    trailing: _saving
-                        ? const SizedBox(
-                            height: 18,
-                            width: 18,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : TextButton(
-                            onPressed: _editDisplayName,
-                            child: const Text('Edit'),
+        child: _loading
+            ? const Center(
+                child: CircularProgressIndicator(color: Colors.pinkAccent))
+            : profile == null
+                ? Center(
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(Icons.wifi_off_rounded,
+                            color: Colors.white.withOpacity(0.3), size: 52),
+                        const SizedBox(height: 16),
+                        const Text('Could not load your profile.',
+                            style: TextStyle(color: Colors.white60)),
+                        const SizedBox(height: 16),
+                        GestureDetector(
+                          onTap: _loadProfile,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 24, vertical: 12),
+                            decoration: BoxDecoration(
+                              gradient: const LinearGradient(colors: [
+                                Colors.pinkAccent,
+                                Colors.cyanAccent
+                              ]),
+                              borderRadius: BorderRadius.circular(50),
+                            ),
+                            child: const Text('Retry',
+                                style: TextStyle(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.bold)),
                           ),
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  SizedBox(
-                    width: double.infinity,
-                    child: OutlinedButton.icon(
-                      onPressed: _saving ? null : _editDisplayName,
-                      icon: const Icon(Icons.edit, color: Colors.white70),
-                      label: const Text(
-                        'Change Display Name',
-                        style: TextStyle(color: Colors.white),
-                      ),
-                      style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.white.withOpacity(0.2)),
-                      ),
+                        ),
+                      ],
                     ),
-                  ),
-
-                  const SizedBox(height: 8),
-
-                  const Text(
-                    'Username cannot be changed.',
-                    style: TextStyle(color: Colors.white60, fontSize: 12),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+                  )
+                : _buildContent(),
       ),
+    );
+  }
+
+  Widget _buildContent() {
+    final username = (profile!['username'] ?? '').toString();
+    final displayName =
+        (profile!['display_name'] ?? profile!['displayName'] ?? '').toString();
+    final email =
+        (profile!['email'] ?? profile!['user']?['email'] ?? '').toString();
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(24, 28, 24, 32),
+      children: [
+        // Avatar header
+        Center(
+          child: Column(
+            children: [
+              Container(
+                width: 78,
+                height: 78,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Colors.pinkAccent, Colors.cyanAccent],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  borderRadius: BorderRadius.circular(22),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.pinkAccent.withOpacity(0.35),
+                      blurRadius: 20,
+                      spreadRadius: 1,
+                    ),
+                  ],
+                ),
+                child: Center(
+                  child: Text(
+                    username.isNotEmpty ? username[0].toUpperCase() : '?',
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 14),
+              Text(
+                displayName.isNotEmpty ? displayName : username,
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '@$username',
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.45), fontSize: 14),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 32),
+
+        // Info card
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+          ),
+          child: Column(
+            children: [
+              _infoRow(
+                icon: Icons.alternate_email_rounded,
+                iconColor: Colors.cyanAccent,
+                label: 'Username',
+                value: '@$username',
+                isFirst: true,
+              ),
+              _divider(),
+              _infoRow(
+                icon: Icons.badge_outlined,
+                iconColor: Colors.pinkAccent,
+                label: 'Display Name',
+                value: displayName.isNotEmpty ? displayName : 'Not set',
+              ),
+              _divider(),
+              _infoRow(
+                icon: Icons.email_outlined,
+                iconColor: Colors.amberAccent,
+                label: 'Email',
+                value: email.isNotEmpty ? email : 'Not available',
+                isLast: true,
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 20),
+
+        // Note
+        Center(
+          child: Text(
+            'To update your information, contact support.',
+            style:
+                TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 12),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _infoRow({
+    required IconData icon,
+    required Color iconColor,
+    required String label,
+    required String value,
+    bool isFirst = false,
+    bool isLast = false,
+  }) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, color: iconColor, size: 20),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(label,
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.45),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5)),
+                const SizedBox(height: 3),
+                Text(value,
+                    style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500)),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _divider() {
+    return Divider(
+      height: 1,
+      color: Colors.white.withOpacity(0.07),
+      indent: 70,
+      endIndent: 18,
     );
   }
 }

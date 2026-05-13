@@ -3,25 +3,12 @@ import 'package:after_hours/services/api_service.dart';
 
 class AboutAppPage extends StatelessWidget {
   final ApiService apiService;
-
   const AboutAppPage({super.key, required this.apiService});
 
   @override
   Widget build(BuildContext context) {
-    final headerStyle = Theme.of(context).textTheme.titleLarge?.copyWith(
-          color: Colors.pinkAccent,
-          fontWeight: FontWeight.bold,
-        );
-    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Colors.white70,
-          height: 1.4,
-        );
-    final chipTextStyle = Theme.of(context).textTheme.bodySmall?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.w600,
-        );
-
     return Scaffold(
+      backgroundColor: const Color(0xFF0f0c29),
       appBar: AppBar(
         backgroundColor: const Color(0xFF0f0c29),
         elevation: 0,
@@ -30,101 +17,177 @@ class AboutAppPage extends StatelessWidget {
           onPressed: () => Navigator.of(context).pop(),
         ),
         title: const Text(
-          'About After Hours',
-          style: TextStyle(fontWeight: FontWeight.bold),
+          'About',
+          style: TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         ),
       ),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [Color(0xFF0f0c29), Color(0xFF302b63)],
+            colors: [
+              Color(0xFF0f0c29),
+              Color(0xFF302b63),
+              Color(0xFF24243e),
+            ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
         ),
         child: ListView(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
           children: [
+            // Hero section
+            const SizedBox(height: 16),
             Center(
               child: Column(
                 children: [
-                  const Icon(Icons.local_bar,
-                      size: 52, color: Colors.pinkAccent),
-                  const SizedBox(height: 12),
-                  Text(
-                    "After Hours: Ranked",
-                    style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: Image.asset(
+                      'assets/icon/icon.png',
+                      width: 90,
+                      height: 90,
+                      fit: BoxFit.cover,
+                    ),
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: 18),
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Colors.pinkAccent, Colors.cyanAccent],
+                    ).createShader(bounds),
+                    child: const Text(
+                      "After Hours: Ranked",
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 0.5,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
                     "Track your night. Level up the vibe.",
-                    style: bodyStyle,
-                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.5),
+                      fontSize: 14,
+                    ),
                   ),
                 ],
               ),
             ),
+
+            const SizedBox(height: 36),
+
+            // What is it
+            _SectionLabel(label: "What is After Hours?"),
+            const SizedBox(height: 10),
+            _Card(
+              child: Text(
+                "After Hours: Ranked is a social drinking companion built for the nights worth remembering. "
+                "Log your drinks, earn XP, climb ranks, and compete with your crew — all in one place.",
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 14,
+                    height: 1.6),
+              ),
+            ),
+
             const SizedBox(height: 24),
-            Text("What is this app?", style: headerStyle),
-            const SizedBox(height: 8),
-            Text(
-              "After Hours: Ranked is a social drinking companion. It lets you log what you’re drinking, earn XP, "
-              "climb ranks, and compete with friends — all while keeping an eye on how much you’ve actually had.",
-              style: bodyStyle,
-            ),
-            const SizedBox(height: 20),
-            Text("Core features", style: headerStyle),
-            const SizedBox(height: 12),
-            _FeatureRow(
-              icon: Icons.sports_esports,
-              title: "Gamified drinking",
+
+            // Features
+            _SectionLabel(label: "What you can do"),
+            const SizedBox(height: 10),
+            _FeatureCard(
+              icon: Icons.emoji_events_rounded,
+              iconColor: Colors.amberAccent,
+              title: "Earn XP & climb ranks",
               text:
-                  "Earn XP for each drink, unlock new tiers, and see where you stand on the leaderboard.",
+                  "Every drink logged earns you XP. Rise through Bronze, Silver, Gold, Platinum, Diamond, and Steeze.",
             ),
-            _FeatureRow(
-              icon: Icons.group,
-              title: "Friends & social feed",
+            _FeatureCard(
+              icon: Icons.people_alt_rounded,
+              iconColor: Colors.cyanAccent,
+              title: "Compete with friends",
               text:
-                  "Add friends, see their ranks, and share what you’re up to on the Nightlife Feed.",
+                  "Add your crew, see where everyone stands on the leaderboard, and talk trash on the feed.",
             ),
-            _FeatureRow(
-              icon: Icons.insights,
-              title: "Awareness, not pressure",
+            _FeatureCard(
+              icon: Icons.bar_chart_rounded,
+              iconColor: Colors.pinkAccent,
+              title: "Track your nights",
               text:
-                  "The app gives you numbers and streaks so you’re more aware of your habits — not to push you to drink more.",
+                  "See your stats over time — daily logs, streaks, and a full history of your sessions.",
             ),
-            const SizedBox(height: 20),
-            Text("Built with", style: headerStyle),
-            const SizedBox(height: 8),
-            Wrap(
-              spacing: 8,
-              runSpacing: 8,
-              children: [
-                _TechChip(label: "Flutter", textStyle: chipTextStyle),
-                _TechChip(label: "Django", textStyle: chipTextStyle),
-                _TechChip(label: "REST API", textStyle: chipTextStyle),
-                _TechChip(label: "PostgreSQL", textStyle: chipTextStyle),
-              ],
+            _FeatureCard(
+              icon: Icons.nightlife_rounded,
+              iconColor: Colors.purpleAccent,
+              title: "Nightlife Feed",
+              text:
+                  "Post what you're up to, react to your friends, and keep the energy going all night.",
             ),
+
             const SizedBox(height: 24),
-            Text("Why it exists", style: headerStyle),
-            const SizedBox(height: 8),
-            Text(
-              "This started as a way to make tracking drinks with friends actually fun — not a boring notes app. "
-              "Instead of guessing how much you had last night, you can see your stats, your progress, and your memories.",
-              style: bodyStyle,
+
+            // Ranks
+            _SectionLabel(label: "The rank ladder"),
+            const SizedBox(height: 10),
+            _Card(
+              child: Column(
+                children: const [
+                  _RankRow(
+                      emoji: "🥉", rank: "Bronze", sub: "Just getting started"),
+                  _RankRow(
+                      emoji: "🥈", rank: "Silver", sub: "Finding your stride"),
+                  _RankRow(emoji: "🥇", rank: "Gold", sub: "A regular"),
+                  _RankRow(
+                      emoji: "💎",
+                      rank: "Platinum",
+                      sub: "Committed to the bit"),
+                  _RankRow(
+                      emoji: "💠",
+                      rank: "Diamond",
+                      sub: "Practically a professional"),
+                  _RankRow(
+                      emoji: "🫧",
+                      rank: "Steeze",
+                      sub: "Legendary status",
+                      isLast: true),
+                ],
+              ),
             ),
+
             const SizedBox(height: 24),
-            Text("A final note", style: headerStyle),
-            const SizedBox(height: 8),
-            Text(
-              "After Hours is about good times and good decisions. If the app ever makes your nights less safe or less fun, "
-              "step back, take a break, and put your health first.",
-              style: bodyStyle,
+
+            // Note
+            _SectionLabel(label: "A note from us"),
+            const SizedBox(height: 10),
+            _Card(
+              child: Text(
+                "After Hours is about good times and good decisions. "
+                "If the app ever makes your nights less safe or less fun, step back, take a break, and put your health first. "
+                "Drink responsibly and look out for your crew.",
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.7),
+                    fontSize: 14,
+                    height: 1.6),
+              ),
             ),
+
+            const SizedBox(height: 24),
+
+            // Version
+            Center(
+              child: Text(
+                "After Hours Media LLC  ·  v1.0.0",
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.25), fontSize: 12),
+              ),
+            ),
+
             const SizedBox(height: 32),
           ],
         ),
@@ -133,48 +196,100 @@ class AboutAppPage extends StatelessWidget {
   }
 }
 
-class _FeatureRow extends StatelessWidget {
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      label,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 16,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.3,
+      ),
+    );
+  }
+}
+
+class _Card extends StatelessWidget {
+  final Widget child;
+  const _Card({required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(18),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: child,
+    );
+  }
+}
+
+class _FeatureCard extends StatelessWidget {
   final IconData icon;
+  final Color iconColor;
   final String title;
   final String text;
 
-  const _FeatureRow({
+  const _FeatureCard({
     required this.icon,
+    required this.iconColor,
     required this.title,
     required this.text,
   });
 
   @override
   Widget build(BuildContext context) {
-    final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-        );
-    final bodyStyle = Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: Colors.white70,
-          height: 1.4,
-        );
-
     return Container(
-      margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.all(14),
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFF1c1842),
+        color: Colors.white.withOpacity(0.05),
         borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.pinkAccent.withOpacity(0.2)),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: Colors.pinkAccent),
-          const SizedBox(width: 12),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: iconColor.withOpacity(0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: iconColor, size: 22),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: titleStyle),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
                 const SizedBox(height: 4),
-                Text(text, style: bodyStyle),
+                Text(
+                  text,
+                  style: TextStyle(
+                    color: Colors.white.withOpacity(0.6),
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
               ],
             ),
           ),
@@ -184,22 +299,54 @@ class _FeatureRow extends StatelessWidget {
   }
 }
 
-class _TechChip extends StatelessWidget {
-  final String label;
-  final TextStyle? textStyle;
+class _RankRow extends StatelessWidget {
+  final String emoji;
+  final String rank;
+  final String sub;
+  final bool isLast;
 
-  const _TechChip({required this.label, this.textStyle});
+  const _RankRow({
+    required this.emoji,
+    required this.rank,
+    required this.sub,
+    this.isLast = false,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1c1842),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.pinkAccent.withOpacity(0.4)),
-      ),
-      child: Text(label, style: textStyle),
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          child: Row(
+            children: [
+              Text(emoji, style: const TextStyle(fontSize: 22)),
+              const SizedBox(width: 14),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    rank,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                  ),
+                  Text(
+                    sub,
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.45),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+        if (!isLast) Divider(color: Colors.white.withOpacity(0.07), height: 1),
+      ],
     );
   }
 }

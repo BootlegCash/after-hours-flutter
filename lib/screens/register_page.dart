@@ -20,26 +20,23 @@ class _RegisterPageState extends State<RegisterPage> {
 
   bool isLoading = false;
   String? errorMessage;
-
-  // ✅ NEW: must accept terms
   bool agreedToTerms = false;
 
-  // ✅ Simple Terms text
   static const String _termsText = '''
 Terms, Safety & Responsibility Agreement
 
 By creating an account, you acknowledge and agree:
 
-• You are at least 21 years old (or the legal drinking age in your location).
-• This app is for social tracking and entertainment only.
-• Alcohol carries health and safety risks.
-• Never drink and drive. Always drink responsibly.
-• This app does not encourage, endorse, or promote excessive drinking.
-• You are responsible for your actions and alcohol consumption.
-• The creators are not liable for any injury, damage, legal issues, or harm related to alcohol use.
-• This app does not provide medical, legal, or health advice.
-• Gamified ranks/points are optional.
-• You will follow local laws and use the app safely and lawfully.
+- You are at least 21 years old (or the legal drinking age in your location).
+- This app is for social tracking and entertainment only.
+- Alcohol carries health and safety risks.
+- Never drink and drive. Always drink responsibly.
+- This app does not encourage, endorse, or promote excessive drinking.
+- You are responsible for your actions and alcohol consumption.
+- The creators are not liable for any injury, damage, legal issues, or harm related to alcohol use.
+- This app does not provide medical, legal, or health advice.
+- Gamified ranks/points are optional.
+- You will follow local laws and use the app safely and lawfully.
 ''';
 
   @override
@@ -56,89 +53,80 @@ By creating an account, you acknowledge and agree:
     await showDialog(
       context: context,
       barrierDismissible: true,
-      builder: (ctx) {
-        return Dialog(
-          backgroundColor: const Color(0xFF1A1A2E),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
-          child: ConstrainedBox(
-            constraints: BoxConstraints(
-              maxHeight: MediaQuery.of(ctx).size.height * 0.7,
-              maxWidth: 520,
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(18),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      const Expanded(
-                        child: Text(
-                          "Terms & Safety",
-                          style: TextStyle(
+      builder: (ctx) => Dialog(
+        backgroundColor: const Color(0xFF1c1842),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(ctx).size.height * 0.7,
+            maxWidth: 520,
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Row(
+                  children: [
+                    const Expanded(
+                      child: Text(
+                        "Terms & Safety",
+                        style: TextStyle(
                             color: Colors.white,
                             fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: () => Navigator.of(ctx).pop(),
-                        icon: const Icon(Icons.close, color: Colors.white70),
-                      )
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Expanded(
-                    child: SingleChildScrollView(
-                      child: Text(
-                        _termsText,
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          height: 1.3,
-                          fontSize: 14,
-                        ),
+                            fontWeight: FontWeight.bold),
                       ),
                     ),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton(
+                    IconButton(
                       onPressed: () => Navigator.of(ctx).pop(),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pinkAccent,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(14),
-                        ),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text(
-                        "Close",
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
+                      icon: const Icon(Icons.close, color: Colors.white54),
                     ),
-                  )
-                ],
-              ),
+                  ],
+                ),
+                Divider(color: Colors.white.withOpacity(0.1)),
+                const SizedBox(height: 8),
+                Expanded(
+                  child: SingleChildScrollView(
+                    child: Text(
+                      _termsText,
+                      style: TextStyle(
+                          color: Colors.white.withOpacity(0.7),
+                          height: 1.5,
+                          fontSize: 13),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                GestureDetector(
+                  onTap: () => Navigator.of(ctx).pop(),
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                          colors: [Colors.pinkAccent, Colors.cyanAccent]),
+                      borderRadius: BorderRadius.circular(50),
+                    ),
+                    child: const Center(
+                      child: Text('Close',
+                          style: TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
-        );
-      },
+        ),
+      ),
     );
   }
 
   Future<void> _register() async {
-    // ✅ Block register if terms not accepted
     if (!agreedToTerms) {
-      setState(() {
-        errorMessage =
-            "You must accept the Terms & Safety agreement to continue.";
-      });
+      setState(() => errorMessage =
+          "You must accept the Terms & Safety agreement to continue.");
       return;
     }
 
@@ -185,9 +173,7 @@ By creating an account, you acknowledge and agree:
 
     if (result['success'] == true) {
       final loggedIn = await widget.apiService.login(username, password);
-
       if (!mounted) return;
-
       if (loggedIn) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -203,8 +189,7 @@ By creating an account, you acknowledge and agree:
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(
-            builder: (_) => LoginPage(apiService: widget.apiService),
-          ),
+              builder: (_) => LoginPage(apiService: widget.apiService)),
           (route) => false,
         );
       }
@@ -215,17 +200,40 @@ By creating an account, you acknowledge and agree:
         msg = err;
       } else if (err is Map) {
         final parts = <String>[];
-        err.forEach((key, value) {
-          parts.add("$key: $value");
-        });
+        err.forEach((key, value) => parts.add("$key: $value"));
         msg = parts.join("\n");
       }
-
       setState(() {
         isLoading = false;
         errorMessage = msg;
       });
     }
+  }
+
+  Widget _field({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    bool obscure = false,
+    TextInputType keyboard = TextInputType.text,
+  }) {
+    return TextField(
+      controller: controller,
+      obscureText: obscure,
+      keyboardType: keyboard,
+      style: const TextStyle(color: Colors.white),
+      decoration: InputDecoration(
+        prefixIcon: Icon(icon, color: Colors.cyanAccent),
+        labelText: label,
+        labelStyle: const TextStyle(color: Colors.cyanAccent),
+        filled: true,
+        fillColor: Colors.white.withOpacity(0.07),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide.none,
+        ),
+      ),
+    );
   }
 
   @override
@@ -238,11 +246,7 @@ By creating an account, you acknowledge and agree:
         height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
-            colors: [
-              Color(0xFF0f0c29),
-              Color(0xFF302b63),
-              Color(0xFF24243e),
-            ],
+            colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
           ),
@@ -250,171 +254,100 @@ By creating an account, you acknowledge and agree:
         child: SafeArea(
           child: Center(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  // Header
+                  ShaderMask(
+                    shaderCallback: (bounds) => const LinearGradient(
+                      colors: [Colors.pinkAccent, Colors.cyanAccent],
+                    ).createShader(bounds),
+                    child: const Text(
+                      "After Hours",
+                      style: TextStyle(
+                        fontSize: 40,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
                   Text(
-                    "After Hours",
+                    "Create your account",
                     style: TextStyle(
-                      fontSize: 42,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.pinkAccent.withOpacity(0.9),
-                      shadows: [
-                        Shadow(
-                          blurRadius: 20,
-                          color: Colors.pinkAccent.withOpacity(0.9),
-                        ),
-                      ],
-                    ),
+                        color: Colors.white.withOpacity(0.5), fontSize: 15),
                   ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Create Account",
-                    style: TextStyle(
-                      fontSize: 22,
-                      color: Colors.white70,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 40),
 
+                  const SizedBox(height: 32),
+
+                  // Form card
                   Container(
                     padding: const EdgeInsets.all(22),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.08),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(
-                        color: Colors.white.withOpacity(0.2),
-                      ),
+                      color: Colors.white.withOpacity(0.06),
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: Colors.white.withOpacity(0.12)),
                     ),
                     child: Column(
                       children: [
-                        TextField(
+                        _field(
                           controller: usernameController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(
-                              Icons.person_outline,
-                              color: Colors.cyanAccent,
-                            ),
-                            labelText: "Username",
-                            labelStyle:
-                                const TextStyle(color: Colors.cyanAccent),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.07),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
+                          label: 'Username',
+                          icon: Icons.person_outline,
                         ),
-                        const SizedBox(height: 18),
-
-                        TextField(
+                        const SizedBox(height: 14),
+                        _field(
                           controller: displayNameController,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(
-                              Icons.nightlife_outlined,
-                              color: Colors.cyanAccent,
-                            ),
-                            labelText: "Display Name",
-                            labelStyle:
-                                const TextStyle(color: Colors.cyanAccent),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.07),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
+                          label: 'Display Name',
+                          icon: Icons.nightlife_outlined,
                         ),
-                        const SizedBox(height: 18),
-
-                        TextField(
+                        const SizedBox(height: 14),
+                        _field(
                           controller: emailController,
-                          keyboardType: TextInputType.emailAddress,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(
-                              Icons.email_outlined,
-                              color: Colors.cyanAccent,
-                            ),
-                            labelText: "Email",
-                            labelStyle:
-                                const TextStyle(color: Colors.cyanAccent),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.07),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
+                          label: 'Email',
+                          icon: Icons.email_outlined,
+                          keyboard: TextInputType.emailAddress,
                         ),
-                        const SizedBox(height: 18),
-
-                        TextField(
+                        const SizedBox(height: 14),
+                        _field(
                           controller: passwordController,
-                          obscureText: true,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(
-                              Icons.lock_outline,
-                              color: Colors.cyanAccent,
-                            ),
-                            labelText: "Password",
-                            labelStyle:
-                                const TextStyle(color: Colors.cyanAccent),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.07),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
+                          label: 'Password',
+                          icon: Icons.lock_outline,
+                          obscure: true,
                         ),
-                        const SizedBox(height: 18),
-
-                        TextField(
+                        const SizedBox(height: 14),
+                        _field(
                           controller: confirmPasswordController,
-                          obscureText: true,
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            prefixIcon: const Icon(
-                              Icons.lock_person_outlined,
-                              color: Colors.cyanAccent,
-                            ),
-                            labelText: "Confirm Password",
-                            labelStyle:
-                                const TextStyle(color: Colors.cyanAccent),
-                            filled: true,
-                            fillColor: Colors.white.withOpacity(0.07),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(14),
-                              borderSide: BorderSide.none,
-                            ),
-                          ),
+                          label: 'Confirm Password',
+                          icon: Icons.lock_person_outlined,
+                          obscure: true,
                         ),
 
-                        const SizedBox(height: 18),
+                        const SizedBox(height: 16),
 
-                        // ✅ NEW: Terms checkbox (required)
+                        // Terms checkbox
                         Container(
-                          padding: const EdgeInsets.all(14),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 12, vertical: 10),
                           decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.06),
+                            color: Colors.white.withOpacity(0.05),
                             borderRadius: BorderRadius.circular(14),
                             border: Border.all(
-                                color: Colors.white.withOpacity(0.12)),
+                                color: agreedToTerms
+                                    ? Colors.pinkAccent.withOpacity(0.4)
+                                    : Colors.white.withOpacity(0.1)),
                           ),
                           child: Row(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                            crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               Checkbox(
                                 value: agreedToTerms,
                                 activeColor: Colors.pinkAccent,
                                 checkColor: Colors.white,
+                                side: BorderSide(
+                                    color: Colors.white.withOpacity(0.3)),
                                 onChanged: (val) {
                                   setState(() {
                                     agreedToTerms = val ?? false;
@@ -423,111 +356,133 @@ By creating an account, you acknowledge and agree:
                                 },
                               ),
                               Expanded(
-                                child: Padding(
-                                  padding: const EdgeInsets.only(top: 4),
-                                  child: Wrap(
-                                    children: [
-                                      const Text(
-                                        "I agree to the ",
+                                child: Wrap(
+                                  children: [
+                                    Text(
+                                      "I agree to the ",
+                                      style: TextStyle(
+                                          color: Colors.white.withOpacity(0.6),
+                                          fontSize: 13),
+                                    ),
+                                    GestureDetector(
+                                      onTap: _showTermsDialog,
+                                      child: const Text(
+                                        "Terms & Safety",
                                         style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 13),
-                                      ),
-                                      GestureDetector(
-                                        onTap: _showTermsDialog,
-                                        child: const Text(
-                                          "Terms & Safety agreement",
-                                          style: TextStyle(
-                                            color: Colors.cyanAccent,
-                                            fontSize: 13,
-                                            decoration:
-                                                TextDecoration.underline,
-                                            fontWeight: FontWeight.w600,
-                                          ),
+                                          color: Colors.cyanAccent,
+                                          fontSize: 13,
+                                          decoration: TextDecoration.underline,
+                                          fontWeight: FontWeight.w600,
                                         ),
                                       ),
-                                      const Text(
-                                        ".",
-                                        style: TextStyle(
-                                            color: Colors.white70,
-                                            fontSize: 13),
-                                      ),
-                                    ],
-                                  ),
+                                    ),
+                                    Text(
+                                      " agreement.",
+                                      style: TextStyle(
+                                          color: Colors.white.withOpacity(0.6),
+                                          fontSize: 13),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ],
                           ),
                         ),
 
-                        const SizedBox(height: 10),
-
-                        if (errorMessage != null)
-                          Text(
-                            errorMessage!,
-                            style: const TextStyle(color: Colors.redAccent),
-                            textAlign: TextAlign.center,
+                        if (errorMessage != null) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 14, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: Colors.redAccent.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                  color: Colors.redAccent.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.error_outline,
+                                    color: Colors.redAccent, size: 16),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(
+                                    errorMessage!,
+                                    style: const TextStyle(
+                                        color: Colors.redAccent, fontSize: 13),
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
+                        ],
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 35),
+                  const SizedBox(height: 28),
 
-                  // ✅ Register button disabled until terms accepted
+                  // Register button
                   GestureDetector(
                     onTap: canSubmit ? _register : null,
                     child: Opacity(
-                      opacity: canSubmit ? 1.0 : 0.55,
+                      opacity: canSubmit ? 1.0 : 0.45,
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                            vertical: 16, horizontal: 60),
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(vertical: 17),
                         decoration: BoxDecoration(
                           gradient: const LinearGradient(
                             colors: [Colors.pinkAccent, Colors.cyanAccent],
                           ),
-                          borderRadius: BorderRadius.circular(18),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.pinkAccent.withOpacity(0.6),
-                              blurRadius: 20,
-                              spreadRadius: 1,
-                            ),
-                          ],
+                          borderRadius: BorderRadius.circular(50),
+                          boxShadow: canSubmit
+                              ? [
+                                  BoxShadow(
+                                    color: Colors.pinkAccent.withOpacity(0.45),
+                                    blurRadius: 24,
+                                    spreadRadius: 1,
+                                  ),
+                                ]
+                              : null,
                         ),
-                        child: isLoading
-                            ? const CircularProgressIndicator(
-                                color: Colors.white)
-                            : const Text(
-                                "CREATE ACCOUNT",
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.bold,
+                        child: Center(
+                          child: isLoading
+                              ? const SizedBox(
+                                  height: 22,
+                                  width: 22,
+                                  child: CircularProgressIndicator(
+                                      color: Colors.white, strokeWidth: 2.5),
+                                )
+                              : const Text(
+                                  "CREATE ACCOUNT",
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 16,
+                                    fontWeight: FontWeight.bold,
+                                    letterSpacing: 1.1,
+                                  ),
                                 ),
-                              ),
+                        ),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 20),
 
                   TextButton(
                     onPressed: () {
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
-                          builder: (_) =>
-                              LoginPage(apiService: widget.apiService),
-                        ),
+                            builder: (_) =>
+                                LoginPage(apiService: widget.apiService)),
                         (route) => false,
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       "Already have an account? Log In",
                       style: TextStyle(
-                        color: Colors.white70,
+                        color: Colors.white.withOpacity(0.55),
                         fontSize: 14,
                         decoration: TextDecoration.underline,
                       ),

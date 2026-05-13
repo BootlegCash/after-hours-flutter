@@ -84,14 +84,6 @@ class ContactUsPage extends StatelessWidget {
           ),
           Card(
             child: ListTile(
-              leading: const Icon(Icons.public),
-              title: const Text('Website'),
-              subtitle: Text(websiteUrl),
-              onTap: () => _openUrl(context, websiteUrl),
-            ),
-          ),
-          Card(
-            child: ListTile(
               leading: const Icon(Icons.camera_alt),
               title: const Text('Instagram'),
               subtitle: Text(instagramUrl),

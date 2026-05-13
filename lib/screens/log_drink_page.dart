@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:after_hours/services/api_service.dart';
-import 'package:after_hours/main_app_wrapper.dart'; // ✅ make sure this exists
+import 'package:after_hours/main_app_wrapper.dart';
 
 class LogDrinkPage extends StatefulWidget {
   final ApiService apiService;
@@ -23,13 +23,7 @@ class _LogDrinkPageState extends State<LogDrinkPage> {
   };
 
   bool isLoading = false;
-  String message = '';
 
-  /// ✅ Use the same logic as Django:
-  ///   alcohol_ml = (beer*17 + floco*43 + rum*9 + whiskey*14 + vodka*18 + tequila*23)
-  ///   alcohol_xp = alcohol_ml * 0.75
-  ///   total_xp = alcohol_xp + shotguns*5 + snorkels*15  (thrown_up assumed 0 here)
-  ///   round: .5 goes up, .4 goes down (standard rounding)
   double calculateXP() {
     int beer = int.tryParse(controllers['Beer/Seltzer']!.text) ?? 0;
     int floco = int.tryParse(controllers['Floco']!.text) ?? 0;
@@ -49,21 +43,14 @@ class _LogDrinkPageState extends State<LogDrinkPage> {
 
     double alcoholXP = alcoholMl * 0.75;
     double bonusXP = (shotguns * 5) + (snorkels * 15);
-
     double totalXP = alcoholXP + bonusXP;
     if (totalXP < 0) totalXP = 0;
-
     return totalXP.roundToDouble();
   }
 
   Future<void> _submitLog() async {
-    // ✅ dismiss keyboard when they submit too
     FocusScope.of(context).unfocus();
-
-    setState(() {
-      isLoading = true;
-      message = '';
-    });
+    setState(() => isLoading = true);
 
     final data = {
       'beer': int.tryParse(controllers['Beer/Seltzer']!.text) ?? 0,
@@ -77,19 +64,11 @@ class _LogDrinkPageState extends State<LogDrinkPage> {
     };
 
     final success = await widget.apiService.logDrinkFromMap(data);
-
     if (!mounted) return;
-
-    setState(() {
-      isLoading = false;
-      message = success ? '✅ Drinks logged!' : '❌ Failed to log drinks';
-    });
+    setState(() => isLoading = false);
 
     if (success) {
-      controllers.forEach((key, controller) {
-        controller.text = '0';
-      });
-
+      controllers.forEach((key, c) => c.text = '0');
       if (mounted) {
         Navigator.pushAndRemoveUntil(
           context,
@@ -101,6 +80,17 @@ class _LogDrinkPageState extends State<LogDrinkPage> {
           ),
           (route) => false,
         );
+      }
+    } else {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+          content: const Text('Failed to log drinks. Try again.',
+              style: TextStyle(color: Colors.white)),
+          backgroundColor: const Color(0xFF1c1842),
+          behavior: SnackBarBehavior.floating,
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        ));
       }
     }
   }
@@ -119,81 +109,10 @@ class _LogDrinkPageState extends State<LogDrinkPage> {
     }
   }
 
-  Widget _buildRow(
-    String label,
-    IconData icon,
-    Color color,
-    TextEditingController controller,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6.0),
-      child: Row(
-        children: [
-          Expanded(
-            flex: 3,
-            child: Row(
-              children: [
-                Icon(icon, color: color, size: 24),
-                const SizedBox(width: 8),
-                Text(
-                  label,
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Expanded(
-            flex: 4,
-            child: Row(
-              children: [
-                IconButton(
-                  icon: const Icon(Icons.remove_circle_outline),
-                  color: Colors.white70,
-                  onPressed: () => _decrement(controller),
-                ),
-                Expanded(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(8),
-                      border: Border.all(
-                        color: color.withOpacity(0.7),
-                        width: 1.5,
-                      ),
-                      color: Colors.black.withOpacity(0.2),
-                    ),
-                    child: TextField(
-                      controller: controller,
-                      keyboardType: TextInputType.number,
-                      style: const TextStyle(color: Colors.white),
-                      textAlign: TextAlign.center,
-                      decoration: const InputDecoration(
-                        border: InputBorder.none,
-                        contentPadding: EdgeInsets.symmetric(
-                          horizontal: 8,
-                          vertical: 10,
-                        ),
-                        hintText: '0',
-                        hintStyle: TextStyle(color: Colors.white54),
-                      ),
-                      onChanged: (_) => setState(() {}),
-                    ),
-                  ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.add_circle_outline),
-                  color: Colors.white70,
-                  onPressed: () => _increment(controller),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
+  @override
+  void dispose() {
+    controllers.forEach((_, c) => c.dispose());
+    super.dispose();
   }
 
   @override
@@ -201,7 +120,10 @@ class _LogDrinkPageState extends State<LogDrinkPage> {
     final xp = calculateXP();
 
     return Scaffold(
+      backgroundColor: const Color(0xFF0f0c29),
       body: Container(
+        width: double.infinity,
+        height: double.infinity,
         decoration: const BoxDecoration(
           gradient: LinearGradient(
             colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)],
@@ -210,151 +132,163 @@ class _LogDrinkPageState extends State<LogDrinkPage> {
           ),
         ),
         child: SafeArea(
-          // ✅ OPTION A: tap anywhere to dismiss keyboard
           child: GestureDetector(
             behavior: HitTestBehavior.translucent,
             onTap: () => FocusScope.of(context).unfocus(),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.fromLTRB(20, 24, 20, 32),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Header
                   Center(
-                    child: Text(
-                      'Log Your Drinks',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        foreground: Paint()
-                          ..shader = const LinearGradient(
-                            colors: [Colors.cyanAccent, Colors.purpleAccent],
-                          ).createShader(
-                            const Rect.fromLTWH(0, 0, 300, 70),
+                    child: Column(
+                      children: [
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Colors.pinkAccent, Colors.cyanAccent],
+                          ).createShader(bounds),
+                          child: const Text(
+                            'Log Your Drinks',
+                            style: TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              letterSpacing: 0.5,
+                            ),
                           ),
-                      ),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          'Tap + or - to adjust each drink',
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.35),
+                              fontSize: 13),
+                        ),
+                      ],
                     ),
                   ),
+
+                  const SizedBox(height: 24),
+
+                  // Drinks section
+                  _sectionLabel('Drinks'),
+                  const SizedBox(height: 10),
+                  _drinkCard([
+                    _DrinkRow('Beer/Seltzer', Icons.local_drink,
+                        Colors.cyanAccent, controllers['Beer/Seltzer']!),
+                    _DrinkRow('Floco', Icons.emoji_nature, Colors.pinkAccent,
+                        controllers['Floco']!),
+                    _DrinkRow('Rum', Icons.local_bar, Colors.cyanAccent,
+                        controllers['Rum']!),
+                    _DrinkRow('Whiskey', Icons.wine_bar, Colors.amberAccent,
+                        controllers['Whiskey']!),
+                    _DrinkRow('Vodka', Icons.liquor, Colors.blueAccent,
+                        controllers['Vodka']!),
+                    _DrinkRow('Tequila', Icons.local_fire_department,
+                        Colors.greenAccent, controllers['Tequila']!),
+                  ]),
+
                   const SizedBox(height: 20),
-                  _buildRow(
-                    'Beer/Seltzer',
-                    Icons.local_drink,
-                    Colors.cyanAccent,
-                    controllers['Beer/Seltzer']!,
-                  ),
-                  _buildRow(
-                    'Floco',
-                    Icons.emoji_nature,
-                    Colors.pinkAccent,
-                    controllers['Floco']!,
-                  ),
-                  _buildRow(
-                    'Rum',
-                    Icons.local_bar,
-                    Colors.cyanAccent,
-                    controllers['Rum']!,
-                  ),
-                  _buildRow(
-                    'Whiskey',
-                    Icons.wine_bar,
-                    Colors.amberAccent,
-                    controllers['Whiskey']!,
-                  ),
-                  _buildRow(
-                    'Vodka',
-                    Icons.liquor,
-                    Colors.blueAccent,
-                    controllers['Vodka']!,
-                  ),
-                  _buildRow(
-                    'Tequila',
-                    Icons.local_fire_department,
-                    Colors.greenAccent,
-                    controllers['Tequila']!,
-                  ),
-                  _buildRow(
-                    'Shotguns',
-                    Icons.sports_bar,
-                    Colors.orangeAccent,
-                    controllers['Shotguns']!,
-                  ),
-                  _buildRow(
-                    'Snorkels',
-                    Icons.waves,
-                    Colors.lightBlueAccent,
-                    controllers['Snorkels']!,
-                  ),
-                  const SizedBox(height: 16),
+
+                  // Performance section
+                  _sectionLabel('Performance'),
+                  const SizedBox(height: 10),
+                  _drinkCard([
+                    _DrinkRow('Shotguns', Icons.sports_bar, Colors.orangeAccent,
+                        controllers['Shotguns']!),
+                    _DrinkRow('Snorkels', Icons.waves, Colors.lightBlueAccent,
+                        controllers['Snorkels']!),
+                  ]),
+
+                  const SizedBox(height: 20),
+
+                  // XP preview
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 20, horizontal: 24),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.3),
-                      borderRadius: BorderRadius.circular(12),
+                      color: Colors.white.withOpacity(0.05),
+                      borderRadius: BorderRadius.circular(20),
                       border: Border.all(
-                        color: Colors.pinkAccent.withOpacity(0.3),
-                      ),
+                          color: Colors.pinkAccent.withOpacity(0.25)),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.pinkAccent.withOpacity(0.1),
+                          blurRadius: 20,
+                          spreadRadius: 1,
+                        ),
+                      ],
                     ),
                     child: Column(
                       children: [
-                        const Text(
+                        Text(
                           'Estimated XP',
                           style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 16,
-                          ),
+                              color: Colors.white.withOpacity(0.5),
+                              fontSize: 13,
+                              letterSpacing: 0.5),
                         ),
                         const SizedBox(height: 8),
-                        Text(
-                          '${xp.toStringAsFixed(0)} XP',
-                          style: const TextStyle(
-                            color: Colors.pinkAccent,
-                            fontSize: 32,
-                            fontWeight: FontWeight.bold,
+                        ShaderMask(
+                          shaderCallback: (bounds) => const LinearGradient(
+                            colors: [Colors.pinkAccent, Colors.cyanAccent],
+                          ).createShader(bounds),
+                          child: Text(
+                            '${xp.toStringAsFixed(0)} XP',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 36,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 16),
-                  Center(
-                    child: ElevatedButton(
-                      onPressed: isLoading ? null : _submitLog,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.pinkAccent,
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 40,
-                          vertical: 16,
+
+                  const SizedBox(height: 24),
+
+                  // Submit button
+                  GestureDetector(
+                    onTap: isLoading ? null : _submitLog,
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(vertical: 17),
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Colors.pinkAccent, Colors.cyanAccent],
                         ),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(24),
-                        ),
+                        borderRadius: BorderRadius.circular(50),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.pinkAccent.withOpacity(0.45),
+                            blurRadius: 24,
+                            spreadRadius: 1,
+                          ),
+                        ],
                       ),
-                      child: isLoading
-                          ? const CircularProgressIndicator(
-                              color: Colors.white,
-                            )
-                          : const Text(
-                              'LOG DRINK',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
+                      child: Center(
+                        child: isLoading
+                            ? const SizedBox(
+                                height: 22,
+                                width: 22,
+                                child: CircularProgressIndicator(
+                                    color: Colors.white, strokeWidth: 2.5),
+                              )
+                            : const Text(
+                                'LOG DRINK',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 1.2,
+                                ),
                               ),
-                            ),
+                      ),
                     ),
                   ),
-                  if (message.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Center(
-                      child: Text(
-                        message,
-                        style: TextStyle(
-                          color: message.startsWith('✅')
-                              ? Colors.greenAccent
-                              : Colors.redAccent,
-                        ),
-                      ),
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -363,4 +297,128 @@ class _LogDrinkPageState extends State<LogDrinkPage> {
       ),
     );
   }
+
+  Widget _sectionLabel(String label) {
+    return Text(
+      label.toUpperCase(),
+      style: TextStyle(
+        color: Colors.white.withOpacity(0.4),
+        fontSize: 11,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.2,
+      ),
+    );
+  }
+
+  Widget _drinkCard(List<_DrinkRow> rows) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.05),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.08)),
+      ),
+      child: Column(
+        children: rows.asMap().entries.map((entry) {
+          final i = entry.key;
+          final row = entry.value;
+          final isLast = i == rows.length - 1;
+
+          return Column(
+            children: [
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 36,
+                      height: 36,
+                      decoration: BoxDecoration(
+                        color: row.color.withOpacity(0.12),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Icon(row.icon, color: row.color, size: 19),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        row.label,
+                        style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                    // Stepper
+                    Row(
+                      children: [
+                        GestureDetector(
+                          onTap: () => _decrement(row.controller),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.08),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.remove,
+                                color: Colors.white.withOpacity(0.6), size: 18),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 44,
+                          child: TextField(
+                            controller: row.controller,
+                            keyboardType: TextInputType.number,
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16),
+                            textAlign: TextAlign.center,
+                            decoration: const InputDecoration(
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            onChanged: (_) => setState(() {}),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: () => _increment(row.controller),
+                          child: Container(
+                            width: 32,
+                            height: 32,
+                            decoration: BoxDecoration(
+                              color: row.color.withOpacity(0.15),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Icon(Icons.add, color: row.color, size: 18),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              if (!isLast)
+                Divider(
+                  height: 1,
+                  color: Colors.white.withOpacity(0.07),
+                  indent: 64,
+                  endIndent: 16,
+                ),
+            ],
+          );
+        }).toList(),
+      ),
+    );
+  }
+}
+
+class _DrinkRow {
+  final String label;
+  final IconData icon;
+  final Color color;
+  final TextEditingController controller;
+
+  const _DrinkRow(this.label, this.icon, this.color, this.controller);
 }

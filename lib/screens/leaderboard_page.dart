@@ -1,10 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:after_hours/services/api_service.dart';
-import 'package:after_hours/screens/friend_profile_page.dart'; // ✅ NEW
+import 'package:after_hours/screens/friend_profile_page.dart';
 
 class LeaderboardPage extends StatefulWidget {
   final ApiService apiService;
-
   const LeaderboardPage({super.key, required this.apiService});
 
   @override
@@ -47,35 +46,37 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+    return Scaffold(
+      backgroundColor: const Color(0xFF0f0c29),
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF1c1842),
+        elevation: 0,
+        title: const Text(
+          'Leaderboard',
+          style: TextStyle(
+              color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
         ),
+        centerTitle: true,
       ),
-      child: SafeArea(
-        child: Scaffold(
-          backgroundColor: Colors.transparent,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            title: const Text(
-              'Friends Leaderboard',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            centerTitle: true,
+      body: Container(
+        width: double.infinity,
+        height: double.infinity,
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [Color(0xFF0f0c29), Color(0xFF302b63), Color(0xFF24243e)],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
           ),
-          body: _buildBody(),
         ),
+        child: _buildBody(),
       ),
     );
   }
 
   Widget _buildBody() {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.pinkAccent));
     }
 
     if (_error != null) {
@@ -83,14 +84,26 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              _error!,
-              style: const TextStyle(color: Colors.redAccent, fontSize: 16),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: _loadLeaderboard,
-              child: const Text('Retry'),
+            Icon(Icons.wifi_off_rounded,
+                color: Colors.white.withOpacity(0.3), size: 52),
+            const SizedBox(height: 16),
+            Text(_error!,
+                style: const TextStyle(color: Colors.white60, fontSize: 15)),
+            const SizedBox(height: 20),
+            GestureDetector(
+              onTap: _loadLeaderboard,
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                      colors: [Colors.pinkAccent, Colors.cyanAccent]),
+                  borderRadius: BorderRadius.circular(50),
+                ),
+                child: const Text('Retry',
+                    style: TextStyle(
+                        color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
             ),
           ],
         ),
@@ -98,23 +111,35 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     }
 
     if (_entries.isEmpty) {
-      return const Center(
-        child: Text(
-          "No friends yet.\nAdd some and see who's on top.",
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 16, color: Colors.white70),
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.emoji_events_outlined,
+                color: Colors.white.withOpacity(0.15), size: 64),
+            const SizedBox(height: 16),
+            Text('No friends yet.',
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.45), fontSize: 15)),
+            const SizedBox(height: 6),
+            Text('Add some and see who\'s on top.',
+                style: TextStyle(
+                    color: Colors.white.withOpacity(0.25), fontSize: 13)),
+          ],
         ),
       );
     }
 
     return RefreshIndicator(
       onRefresh: _loadLeaderboard,
+      backgroundColor: const Color(0xFF1c1842),
+      color: Colors.pinkAccent,
       child: ListView.builder(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
         itemCount: _entries.length,
         itemBuilder: (context, index) {
           final item = _entries[index];
-          final bool isMe = (item['is_me'] == true);
+          final bool isMe = item['is_me'] == true;
           final int position = item['position'] ?? (index + 1);
           final String displayName =
               (item['display_name'] as String?) ?? 'User';
@@ -143,106 +168,183 @@ class _LeaderboardPageState extends State<LeaderboardPage> {
     required int xp,
     required bool isMe,
   }) {
-    final Color accent =
-        isMe ? Colors.pinkAccent : const Color(0xFF6C63FF); // neon-ish
+    // Medal colors for top 3
+    Color? medalColor;
+    if (position == 1) medalColor = const Color(0xFFFFD700);
+    if (position == 2) medalColor = const Color(0xFFC0C0C0);
+    if (position == 3) medalColor = const Color(0xFFCD7F32);
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1c1842),
-        borderRadius: BorderRadius.circular(16),
-        boxShadow: isMe
-            ? [
-                BoxShadow(
-                  color: accent.withOpacity(0.6),
-                  blurRadius: 12,
-                  spreadRadius: 1,
+    return GestureDetector(
+      onTap: (isMe || username.isEmpty)
+          ? null
+          : () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => FriendProfilePage(
+                    apiService: widget.apiService,
+                    username: username,
+                  ),
                 ),
-              ]
-            : [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.5),
-                  blurRadius: 6,
-                  spreadRadius: 0,
+              );
+            },
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 10),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isMe
+              ? Colors.pinkAccent.withOpacity(0.12)
+              : Colors.white.withOpacity(0.05),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: isMe
+                ? Colors.pinkAccent.withOpacity(0.4)
+                : Colors.white.withOpacity(0.08),
+          ),
+          boxShadow: isMe
+              ? [
+                  BoxShadow(
+                    color: Colors.pinkAccent.withOpacity(0.2),
+                    blurRadius: 16,
+                    spreadRadius: 1,
+                  )
+                ]
+              : null,
+        ),
+        child: Row(
+          children: [
+            // Position badge
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: medalColor != null
+                    ? medalColor.withOpacity(0.15)
+                    : Colors.white.withOpacity(0.07),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(
+                  color: medalColor != null
+                      ? medalColor.withOpacity(0.5)
+                      : Colors.white.withOpacity(0.1),
+                ),
+              ),
+              child: Center(
+                child: medalColor != null
+                    ? Text(
+                        position == 1
+                            ? '🥇'
+                            : position == 2
+                                ? '🥈'
+                                : '🥉',
+                        style: const TextStyle(fontSize: 20),
+                      )
+                    : Text(
+                        '#$position',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.6),
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                      ),
+              ),
+            ),
+
+            const SizedBox(width: 14),
+
+            // Avatar
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: isMe
+                      ? [Colors.pinkAccent, Colors.cyanAccent]
+                      : [
+                          const Color(0xFF6C63FF),
+                          const Color(0xFF3D3D8F),
+                        ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Center(
+                child: Text(
+                  displayName.isNotEmpty ? displayName[0].toUpperCase() : '?',
+                  style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 18),
+                ),
+              ),
+            ),
+
+            const SizedBox(width: 12),
+
+            // Name + rank
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Flexible(
+                        child: Text(
+                          displayName,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15),
+                        ),
+                      ),
+                      if (isMe) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 7, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.pinkAccent,
+                            borderRadius: BorderRadius.circular(50),
+                          ),
+                          child: const Text('YOU',
+                              style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5)),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    '@$username · $rank',
+                    style: TextStyle(
+                        color: Colors.white.withOpacity(0.45), fontSize: 12),
+                  ),
+                ],
+              ),
+            ),
+
+            // XP
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  xp.toString(),
+                  style: TextStyle(
+                    color: isMe ? Colors.pinkAccent : Colors.cyanAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                  ),
+                ),
+                Text(
+                  'XP',
+                  style: TextStyle(
+                      color: Colors.white.withOpacity(0.35), fontSize: 11),
                 ),
               ],
-      ),
-      child: ListTile(
-        // ✅ tap to open friend profile, but NOT for yourself
-        onTap: (isMe || username.isEmpty)
-            ? null
-            : () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (_) => FriendProfilePage(
-                      apiService: widget.apiService,
-                      username: username,
-                    ),
-                  ),
-                );
-              },
-        leading: CircleAvatar(
-          radius: 20,
-          backgroundColor: accent,
-          child: Text(
-            '#$position',
-            style: const TextStyle(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 14,
-            ),
-          ),
-        ),
-        title: Row(
-          children: [
-            Expanded(
-              child: Text(
-                displayName,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
-              ),
-            ),
-            if (isMe)
-              Container(
-                margin: const EdgeInsets.only(left: 6),
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                decoration: BoxDecoration(
-                  color: accent,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Text(
-                  'YOU',
-                  style: TextStyle(
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-          ],
-        ),
-        subtitle: Text(
-          '@$username • $rank',
-          style: const TextStyle(color: Colors.white70),
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Text(
-              'XP',
-              style: TextStyle(fontSize: 10, color: Colors.white54),
-            ),
-            Text(
-              xp.toString(),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 16,
-                color: Colors.white,
-              ),
             ),
           ],
         ),
