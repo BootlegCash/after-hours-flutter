@@ -28,6 +28,7 @@ import 'package:after_hours/screens/contact_page.dart';
 import 'package:after_hours/screens/friend_requests_page.dart';
 import 'package:after_hours/screens/friends_search_page.dart';
 import 'package:after_hours/screens/friend_profile_page.dart';
+import 'package:after_hours/screens/rank_history_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -83,6 +84,7 @@ class MyApp extends StatelessWidget {
         // Friends extras (lists)
         '/friends/requests': (_) => FriendRequestsPage(apiService: apiService),
         '/friends/search': (_) => const FriendsSearchPage(),
+        '/rank-history': (_) => RankHistoryPage(apiService: apiService),
       },
 
       // Dynamic routes (e.g. friend profile by username)

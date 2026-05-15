@@ -383,6 +383,41 @@ class ApiService {
   }
 
   // ================================================================
+  // RANK HISTORY
+  // ================================================================
+
+  Future<List<Map<String, dynamic>>?> fetchRankHistory() async {
+    if (token == null) return null;
+
+    final url = Uri.parse('$_accountsApiBase/rank-history/');
+    try {
+      final response = await http.get(url, headers: _authHeaders());
+
+      developer.log(
+        'RankHistory response: ${response.statusCode} ${response.body}',
+        name: 'ApiService.fetchRankHistory',
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        if (decoded is List) {
+          return decoded
+              .map<Map<String, dynamic>>(
+                  (e) => Map<String, dynamic>.from(e as Map))
+              .toList();
+        }
+      }
+    } catch (e) {
+      developer.log(
+        'RankHistory error: $e',
+        name: 'ApiService.fetchRankHistory',
+        error: e,
+      );
+    }
+    return null;
+  }
+
+  // ================================================================
   // LEADERBOARD
   // ================================================================
 

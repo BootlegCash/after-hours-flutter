@@ -71,19 +71,21 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
   }
 
   Color getRankColor(String rank) {
-    switch (rank.toLowerCase()) {
+    final tier = rank.split(' ').first.toLowerCase();
+    switch (tier) {
       case 'bronze':
-        return const Color(0xFFCD7F32);
+        return Colors.amber;
       case 'silver':
-        return const Color(0xFFC0C0C0);
+        return Colors.grey[300]!;
       case 'gold':
-        return const Color(0xFFFFD700);
+        return Colors.yellow;
       case 'platinum':
-        return const Color(0xFFE5E4E2);
+        return Colors.cyan;
       case 'diamond':
-        return const Color(0xFFB9F2FF);
+        return Colors.blue;
+      case 'steeze':
       case 'steez':
-        return Colors.purpleAccent;
+        return Colors.pinkAccent;
       default:
         return Colors.pinkAccent;
     }
@@ -142,6 +144,8 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
 
     final String username = profile!['username'] ?? 'User';
     final String rank = profile!['rank']?.toString() ?? 'Unranked';
+    final String monthlyRank = profile!['monthly_rank']?.toString() ?? 'Unranked';
+    final String yearlyRank = profile!['yearly_rank']?.toString() ?? 'Unranked';
     final double xp = (profile!['xp'] as num?)?.toDouble() ?? 0.0;
     final double xpNext =
         (profile!['xp_to_next_level'] as num?)?.toDouble() ?? xp + 1000;
@@ -172,13 +176,13 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
       body: RefreshIndicator(
         onRefresh: _loadProfile,
         color: Colors.pinkAccent,
-        child: _buildProfileBody(username, rank, xp, xpNext, progress),
+        child: _buildProfileBody(username, rank, monthlyRank, yearlyRank, xp, xpNext, progress),
       ),
     );
   }
 
   Widget _buildProfileBody(
-      String username, String rank, double xp, double xpNext, double progress) {
+      String username, String rank, String monthlyRank, String yearlyRank, double xp, double xpNext, double progress) {
     String beers = (profile!['beer'] as int? ?? 0).toString();
     String flocos = (profile!['floco'] as int? ?? 0).toString();
     String rum = (profile!['rum'] as int? ?? 0).toString();
@@ -203,7 +207,22 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _buildProfileCard(username, rank, xp, xpNext, progress),
-            const SizedBox(height: 24),
+            const SizedBox(height: 16),
+            _buildRanksSection(rank, monthlyRank, yearlyRank),
+            const SizedBox(height: 12),
+            SizedBox(
+              width: double.infinity,
+              child: OutlinedButton.icon(
+                onPressed: () => Navigator.pushNamed(context, '/rank-history'),
+                icon: const Icon(Icons.history, color: Colors.pinkAccent),
+                label: const Text('View Rank History', style: TextStyle(color: Colors.pinkAccent)),
+                style: OutlinedButton.styleFrom(
+                  side: const BorderSide(color: Colors.pinkAccent),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                ),
+              ),
+            ),
             const SizedBox(height: 24),
             GridView.count(
               shrinkWrap: true,
@@ -287,6 +306,67 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
                 : '${xp.toInt()} / ${xpNext.toInt()} XP to next',
             style: const TextStyle(color: Colors.white70, fontSize: 12),
           ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRanksSection(String lifetime, String monthly, String yearly) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            Colors.white.withOpacity(0.05),
+            Colors.white.withOpacity(0.15),
+          ],
+        ),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withOpacity(0.1)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text('Ranks',
+              style: TextStyle(
+                  color: Colors.white70,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600)),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(child: _buildRankChip('Lifetime', lifetime)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildRankChip('This Month', monthly)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildRankChip('This Year', yearly)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRankChip(String label, String rank) {
+    final color = getRankColor(rank);
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.15),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.4)),
+      ),
+      child: Column(
+        children: [
+          Text(label,
+              style: const TextStyle(color: Colors.white70, fontSize: 11)),
+          const SizedBox(height: 4),
+          Text(rank,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                  color: color, fontSize: 14, fontWeight: FontWeight.bold)),
         ],
       ),
     );
