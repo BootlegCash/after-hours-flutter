@@ -71,24 +71,13 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
   }
 
   Color getRankColor(String rank) {
-    final tier = rank.split(' ').first.toLowerCase();
-    switch (tier) {
-      case 'bronze':
-        return Colors.amber;
-      case 'silver':
-        return Colors.grey[300]!;
-      case 'gold':
-        return Colors.yellow;
-      case 'platinum':
-        return Colors.cyan;
-      case 'diamond':
-        return Colors.blue;
-      case 'steeze':
-      case 'steez':
-        return Colors.pinkAccent;
-      default:
-        return Colors.pinkAccent;
-    }
+    if (rank.contains('Bronze')) return const Color(0xFFCD7F32);
+    if (rank.contains('Silver')) return const Color(0xFFB0BEC5);
+    if (rank.contains('Gold')) return const Color(0xFFFFD700);
+    if (rank.contains('Platinum')) return const Color(0xFF00BCD4);
+    if (rank.contains('Diamond')) return const Color(0xFF42A5F5);
+    if (rank.contains('Steeze')) return Colors.pinkAccent;
+    return Colors.pinkAccent;
   }
 
   @override
@@ -143,9 +132,9 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
     }
 
     final String username = profile!['username'] ?? 'User';
-    final String rank = profile!['rank']?.toString() ?? 'Unranked';
-    final String monthlyRank = profile!['monthly_rank']?.toString() ?? 'Unranked';
-    final String yearlyRank = profile!['yearly_rank']?.toString() ?? 'Unranked';
+    final String rank = profile!['rank']?.toString() ?? '—';
+    final String monthlyRank = profile!['monthly_rank']?.toString() ?? '—';
+    final String yearlyRank = profile!['yearly_rank']?.toString() ?? '—';
     final double xp = (profile!['xp'] as num?)?.toDouble() ?? 0.0;
     final double xpNext =
         (profile!['xp_to_next_level'] as num?)?.toDouble() ?? xp + 1000;
@@ -337,11 +326,11 @@ class _ProfilePageState extends State<ProfilePage> with RouteAware {
           const SizedBox(height: 12),
           Row(
             children: [
-              Expanded(child: _buildRankChip('Lifetime', lifetime)),
-              const SizedBox(width: 8),
               Expanded(child: _buildRankChip('This Month', monthly)),
               const SizedBox(width: 8),
               Expanded(child: _buildRankChip('This Year', yearly)),
+              const SizedBox(width: 8),
+              Expanded(child: _buildRankChip('Lifetime', lifetime)),
             ],
           ),
         ],
