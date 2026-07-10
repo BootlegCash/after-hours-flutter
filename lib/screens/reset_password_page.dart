@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:after_hours/services/api_service.dart';
+import 'package:after_hours/core/password_reset_launcher.dart';
 
 class ResetPasswordPage extends StatefulWidget {
   final ApiService apiService;
@@ -15,18 +15,13 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
 
   Future<void> _openResetPage() async {
     setState(() => _launching = true);
-    final uri =
-        Uri.parse('https://www.afterhoursranked.com/accounts/password_reset/');
-    try {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } catch (_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text("Couldn't open reset page. Try again.")),
-        );
-      }
-    } finally {
-      if (mounted) setState(() => _launching = false);
+    final opened = await openPasswordResetPage();
+    if (!mounted) return;
+    setState(() => _launching = false);
+    if (!opened) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Couldn't open reset page. Try again.")),
+      );
     }
   }
 

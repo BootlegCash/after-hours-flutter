@@ -1,4 +1,4 @@
-import 'dart:convert';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:after_hours/services/api_service.dart';
 import 'package:after_hours/screens/friend_profile_page.dart';
@@ -20,6 +20,8 @@ class _FriendsPageState extends State<FriendsPage>
   List<dynamic> _searchResults = [];
   bool _isSearching = false;
   bool _hasSearched = false;
+  int _searchVersion = 0;
+  Timer? _searchDebounce;
   final TextEditingController _searchController = TextEditingController();
   String? _myUsername;
 
@@ -62,10 +64,11 @@ class _FriendsPageState extends State<FriendsPage>
     await _requestsFuture;
   }
 
-  Future<void> _performSearch() async {
+  Future<void> _performSearch({bool dismissKeyboard = true}) async {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
-    FocusScope.of(context).unfocus();
+    final version = ++_searchVersion;
+    if (dismissKeyboard) FocusScope.of(context).unfocus();
     setState(() {
       _isSearching = true;
       _hasSearched = true;
@@ -73,12 +76,34 @@ class _FriendsPageState extends State<FriendsPage>
     });
     try {
       final results = await widget.apiService.searchUsers(query);
+      if (!mounted || version != _searchVersion) return;
       setState(() => _searchResults = results);
     } catch (e) {
-      _showSnack(e.toString());
+      if (mounted && version == _searchVersion) {
+        _showSnack(e.toString());
+      }
     } finally {
-      if (mounted) setState(() => _isSearching = false);
+      if (mounted && version == _searchVersion) {
+        setState(() => _isSearching = false);
+      }
     }
+  }
+
+  void _onSearchTextChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchVersion++;
+    if (_hasSearched || _searchResults.isNotEmpty || _isSearching) {
+      setState(() {
+        _hasSearched = false;
+        _searchResults = [];
+        _isSearching = false;
+      });
+    }
+    if (value.trim().isEmpty) return;
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 250),
+      () => _performSearch(dismissKeyboard: false),
+    );
   }
 
   String _usernameFromProfile(Map<String, dynamic> p) {
@@ -130,7 +155,8 @@ class _FriendsPageState extends State<FriendsPage>
       _showSnack('Request sent to @$username');
       _loadRequests();
     } else {
-      _showSnack('Already sent a request to @$username');
+      _showSnack(widget.apiService.lastFriendActionError ??
+          'Could not send request to @$username');
     }
   }
 
@@ -201,6 +227,7 @@ class _FriendsPageState extends State<FriendsPage>
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _tabController.dispose();
     _searchController.dispose();
     super.dispose();
@@ -569,6 +596,7 @@ class _FriendsPageState extends State<FriendsPage>
               controller: _searchController,
               style: const TextStyle(color: Colors.white),
               textInputAction: TextInputAction.search,
+              onChanged: _onSearchTextChanged,
               onSubmitted: (_) => _performSearch(),
               decoration: InputDecoration(
                 hintText: 'Search by username...',

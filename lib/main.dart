@@ -17,7 +17,6 @@ import 'package:after_hours/screens/settings_page.dart';
 
 // Info/utility screens
 import 'package:after_hours/screens/view_information_page.dart';
-import 'package:after_hours/screens/reset_password_page.dart';
 import 'package:after_hours/screens/drinking_safely_page.dart';
 import 'package:after_hours/screens/policies_page.dart';
 import 'package:after_hours/screens/about_app_page.dart';
@@ -29,6 +28,7 @@ import 'package:after_hours/screens/friend_requests_page.dart';
 import 'package:after_hours/screens/friends_search_page.dart';
 import 'package:after_hours/screens/friend_profile_page.dart';
 import 'package:after_hours/screens/rank_history_page.dart';
+import 'package:after_hours/screens/calendar_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -85,6 +85,7 @@ class MyApp extends StatelessWidget {
         '/friends/requests': (_) => FriendRequestsPage(apiService: apiService),
         '/friends/search': (_) => const FriendsSearchPage(),
         '/rank-history': (_) => RankHistoryPage(apiService: apiService),
+        '/calendar': (_) => CalendarPage(apiService: apiService),
       },
 
       // Dynamic routes (e.g. friend profile by username)

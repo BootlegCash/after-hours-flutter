@@ -65,11 +65,25 @@ class _FriendProfilePageState extends State<FriendProfilePage> {
     setState(() => _friendActionLoading = true);
 
     bool success = false;
-    bool areFriends = _data!['are_friends'] == true;
+    final areFriends = _data!['are_friends'] == true;
+    final status = _data!['friendship_status']?.toString() ??
+        (areFriends ? 'friends' : 'none');
 
-    if (areFriends) {
+    if (status == 'friends') {
       // remove friend
       success = await widget.apiService.removeFriend(username);
+    } else if (status == 'incoming') {
+      final requestId = _data!['incoming_request_id'] as int?;
+      if (requestId != null) {
+        try {
+          await widget.apiService.acceptFriendRequest(requestId);
+          success = true;
+        } catch (_) {
+          success = false;
+        }
+      }
+    } else if (status == 'outgoing') {
+      success = true;
     } else {
       // send request
       success = await widget.apiService.sendFriendRequest(username);
@@ -85,13 +99,22 @@ class _FriendProfilePageState extends State<FriendProfilePage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            areFriends ? 'Friend removed.' : 'Friend request sent.',
+            status == 'friends'
+                ? 'Friend removed.'
+                : status == 'incoming'
+                    ? 'Friend request accepted.'
+                    : status == 'outgoing'
+                        ? 'Friend request already sent.'
+                        : 'Friend request sent.',
           ),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Action failed. Try again.')),
+        SnackBar(
+          content: Text(widget.apiService.lastFriendActionError ??
+              'Action failed. Try again.'),
+        ),
       );
     }
   }
@@ -155,6 +178,8 @@ class _FriendProfilePageState extends State<FriendProfilePage> {
     final nextXp = (d['next_rank_xp'] as num? ?? 0).toDouble();
     final totalDrinks = d['total_drinks'] as int? ?? 0;
     final areFriends = d['are_friends'] == true;
+    final friendshipStatus =
+        d['friendship_status']?.toString() ?? (areFriends ? 'friends' : 'none');
 
     final beer = d['beer'] as int? ?? 0;
     final floco = d['floco'] as int? ?? 0;
@@ -316,10 +341,15 @@ class _FriendProfilePageState extends State<FriendProfilePage> {
           SizedBox(
             width: double.infinity,
             child: ElevatedButton(
-              onPressed: _friendActionLoading ? null : _toggleFriendship,
+              onPressed: _friendActionLoading || friendshipStatus == 'outgoing'
+                  ? null
+                  : _toggleFriendship,
               style: ElevatedButton.styleFrom(
-                backgroundColor:
-                    areFriends ? Colors.redAccent : Colors.pinkAccent,
+                backgroundColor: friendshipStatus == 'friends'
+                    ? Colors.redAccent
+                    : friendshipStatus == 'incoming'
+                        ? Colors.green
+                        : Colors.pinkAccent,
                 padding:
                     const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
                 shape: RoundedRectangleBorder(
@@ -336,7 +366,13 @@ class _FriendProfilePageState extends State<FriendProfilePage> {
                       ),
                     )
                   : Text(
-                      areFriends ? 'Remove Friend' : 'Add Friend',
+                      friendshipStatus == 'friends'
+                          ? 'Remove Friend'
+                          : friendshipStatus == 'incoming'
+                              ? 'Accept Request'
+                              : friendshipStatus == 'outgoing'
+                                  ? 'Request Sent'
+                                  : 'Add Friend',
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
