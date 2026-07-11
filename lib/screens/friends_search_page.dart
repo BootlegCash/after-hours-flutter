@@ -1,6 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import '../core/friends_service.dart';
-import '../widgets/friend_tile.dart';
 
 class FriendsSearchPage extends StatefulWidget {
   const FriendsSearchPage({super.key});
@@ -14,19 +14,23 @@ class _FriendsSearchPageState extends State<FriendsSearchPage> {
   List<dynamic> _results = [];
   bool _searching = false;
   bool _hasSearched = false;
+  int _searchVersion = 0;
+  Timer? _searchDebounce;
   String? _error;
 
   @override
   void dispose() {
+    _searchDebounce?.cancel();
     _controller.dispose();
     super.dispose();
   }
 
-  Future<void> _search() async {
+  Future<void> _search({bool dismissKeyboard = true}) async {
     final query = _controller.text.trim();
     if (query.isEmpty) return;
+    final version = ++_searchVersion;
 
-    FocusScope.of(context).unfocus();
+    if (dismissKeyboard) FocusScope.of(context).unfocus();
 
     setState(() {
       _searching = true;
@@ -37,16 +41,36 @@ class _FriendsSearchPageState extends State<FriendsSearchPage> {
 
     try {
       final r = await FriendsService.search(query);
+      if (!mounted || version != _searchVersion) return;
       setState(() {
         _results = r;
         _searching = false;
       });
     } catch (e) {
+      if (!mounted || version != _searchVersion) return;
       setState(() {
         _error = '$e';
         _searching = false;
       });
     }
+  }
+
+  void _onQueryChanged(String value) {
+    _searchDebounce?.cancel();
+    _searchVersion++;
+    if (_hasSearched || _results.isNotEmpty || _searching) {
+      setState(() {
+        _hasSearched = false;
+        _results = [];
+        _searching = false;
+        _error = null;
+      });
+    }
+    if (value.trim().isEmpty) return;
+    _searchDebounce = Timer(
+      const Duration(milliseconds: 250),
+      () => _search(dismissKeyboard: false),
+    );
   }
 
   @override
@@ -95,6 +119,7 @@ class _FriendsSearchPageState extends State<FriendsSearchPage> {
                   controller: _controller,
                   style: const TextStyle(color: Colors.white),
                   textInputAction: TextInputAction.search,
+                  onChanged: _onQueryChanged,
                   onSubmitted: (_) => _search(),
                   decoration: InputDecoration(
                     hintText: 'Search by username...',

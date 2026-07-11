@@ -6,11 +6,9 @@ import 'package:http/http.dart' as http;
 class ApiService {
   static const baseUrl = 'https://ranked-0xtx.onrender.com';
 
-  // ✅ Web-gate key (Render ENV: APP_GATE_KEY)
-  static const String _appGateKey = 'ah_9f8d2c1b6a3e4f7a8c0d_very_secret';
-
   String? token;
   String? currentUsername;
+  String? lastFriendActionError;
   VoidCallback? onAuthStateChanged;
 
   bool get isAuthenticated => token != null && token!.isNotEmpty;
@@ -18,13 +16,11 @@ class ApiService {
   String get _accountsApiBase => '$baseUrl/accounts/api';
 
   // ================================================================
-  // INTERNAL HELPERS (ALWAYS INCLUDE X-APP-KEY)
+  // INTERNAL HELPERS
   // ================================================================
 
   Map<String, String> _baseHeaders() {
-    return {
-      'X-APP-KEY': _appGateKey,
-    };
+    return {};
   }
 
   Map<String, String> _authHeaders() {
@@ -241,6 +237,62 @@ class ApiService {
     }
   }
 
+  Future<List<Map<String, dynamic>>> fetchDrinkHistory(
+      int year, int month) async {
+    if (token == null) return const [];
+
+    final url = Uri.parse('$_accountsApiBase/calendar/$year/$month/');
+    try {
+      final response = await http.get(url, headers: _authHeaders());
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body) as Map<String, dynamic>;
+        final weeks = decoded['weeks'];
+        if (weeks is List) {
+          final logs = <Map<String, dynamic>>[];
+          for (final week in weeks.whereType<List>()) {
+            for (final rawDay in week.whereType<Map>()) {
+              final day = Map<String, dynamic>.from(rawDay);
+              final rawLog = day['log'];
+              if (rawLog is Map) {
+                final log = Map<String, dynamic>.from(rawLog);
+                log['date'] ??= day['date'];
+                logs.add(log);
+              }
+            }
+          }
+          return logs;
+        }
+      }
+    } catch (e) {
+      developer.log('Calendar history error: $e',
+          name: 'ApiService.fetchDrinkHistory', error: e);
+    }
+    return const [];
+  }
+
+  Future<Map<String, int>> fetchPeriodXpSummary() async {
+    final now = DateTime.now();
+    final monthlyLogs = await fetchDrinkHistory(now.year, now.month);
+    final otherMonths = await Future.wait([
+      for (var month = 1; month < now.month; month++)
+        fetchDrinkHistory(now.year, month),
+    ]);
+
+    int sumXp(Iterable<Map<String, dynamic>> logs) => logs.fold<int>(
+          0,
+          (total, log) =>
+              total +
+              ((log['xp'] as num?)?.round() ??
+                  int.tryParse('${log['xp']}') ??
+                  0),
+        );
+
+    final monthlyXp = sumXp(monthlyLogs);
+    final yearlyXp = monthlyXp +
+        otherMonths.fold<int>(0, (total, logs) => total + sumXp(logs));
+    return {'monthly_xp': monthlyXp, 'yearly_xp': yearlyXp};
+  }
+
   // ================================================================
   // LOGOUT
   // ================================================================
@@ -304,6 +356,7 @@ class ApiService {
 
   Future<bool> sendFriendRequest(String username) async {
     if (token == null) return false;
+    lastFriendActionError = null;
 
     final url = Uri.parse('$_accountsApiBase/friends/request/send/');
 
@@ -317,13 +370,23 @@ class ApiService {
       developer.log('sendFriendRequest: ${resp.statusCode} ${resp.body}',
           name: 'ApiService.sendRequest');
 
-      return resp.statusCode == 200 || resp.statusCode == 201;
+      final success = resp.statusCode == 200 || resp.statusCode == 201;
+      if (!success) {
+        try {
+          final data = jsonDecode(resp.body) as Map<String, dynamic>;
+          lastFriendActionError = (data['detail'] ?? data['error'])?.toString();
+        } catch (_) {
+          lastFriendActionError = 'Could not send friend request.';
+        }
+      }
+      return success;
     } catch (e) {
       developer.log(
         'sendFriendRequest error: $e',
         name: 'ApiService.sendRequest',
         error: e,
       );
+      lastFriendActionError = 'Could not connect to the server.';
       return false;
     }
   }

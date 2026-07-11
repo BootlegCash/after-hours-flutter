@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:after_hours/services/api_service.dart';
 import 'package:after_hours/main.dart';
+import 'package:after_hours/core/password_reset_launcher.dart';
 import 'register_page.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class LoginPage extends StatefulWidget {
   final ApiService apiService;
@@ -19,43 +19,10 @@ class _LoginPageState extends State<LoginPage> {
   bool isLoading = false;
   String? errorMessage;
 
-  // ============================================================
-  // ✅ PUT YOUR NEW ROTATED KEY HERE (replace the string below)
-  // ============================================================
-  static const String _gateKey = "ah_9f8d2c1b6a3e4f7a8c0d_very_secret";
-
-  // This builds: https://www.afterhoursranked.com/accounts/password_reset
-  Uri get _resetUri => Uri.https(
-        "www.afterhoursranked.com",
-        "/accounts/password_reset/",
-        {"k": _gateKey},
-      );
-
   Future<void> _openResetPassword() async {
     setState(() => errorMessage = null);
-
-    final uri = _resetUri;
-
-    try {
-      final canOpen = await canLaunchUrl(uri);
-      if (!canOpen) {
-        if (!mounted) return;
-        setState(() => errorMessage = "Can't open reset page on this device.");
-        return;
-      }
-
-      // iOS: in-app Safari sheet is usually the most reliable
-      final ok = await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-
-      // Fallback: external Safari
-      if (!ok) {
-        final ok2 = await launchUrl(uri, mode: LaunchMode.externalApplication);
-        if (!ok2 && mounted) {
-          setState(() => errorMessage = "Couldn't open reset page. Try again.");
-        }
-      }
-    } catch (_) {
-      if (!mounted) return;
+    final opened = await openPasswordResetPage();
+    if (!opened && mounted) {
       setState(() => errorMessage = "Reset link failed to open. Try again.");
     }
   }
